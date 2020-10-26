@@ -1,0 +1,16 @@
+[package]
+name = "grr-gpu"
+version = "0.1.0"
+authors = ["msiglreith <m.siglreith@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+grr = { git = "https://github.com/msiglreith/grr.git", branch = "spirv" }
+glutin = "0.21"
+
+[build-dependencies]
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "75ca54546b6b1e6de753040ced4749835dc33e11" }
+
