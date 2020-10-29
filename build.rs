@@ -1,7 +1,9 @@
-// use spirv_builder::SpirvBuilder;
-// use std::error::Error;
+use spirv_builder::{MemoryModel, SpirvBuilder};
+use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // SpirvBuilder::new("shader").build()?;
-    // Ok(())
+    SpirvBuilder::new("shader")
+    .spirv_version(1, 0)
+    .memory_model(MemoryModel::GLSL450).build()?;
+    Ok(())
 }

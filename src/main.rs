@@ -1,10 +1,5 @@
 use glutin::dpi::LogicalSize;
 use std::error::Error;
-
-const VERTICES: [f32; 15] = [
-    -0.5, -0.5, 1.0, 0.0, 0.0, 0.5, -0.5, 0.0, 1.0, 0.0, 0.0, 0.5, 0.0, 0.0, 1.0,
-];
-
 fn main() -> Result<(), Box<dyn Error>> {
     unsafe {
         let mut events_loop = glutin::EventsLoop::new();
@@ -42,13 +37,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let vs = grr.create_shader(
             grr::ShaderStage::Vertex,
             grr::ShaderSource::Spirv { entrypoint: "main_vs" },
-            &spirv,
+            &spirv[..],
             grr::ShaderFlags::VERBOSE,
         )?;
         let fs = grr.create_shader(
             grr::ShaderStage::Fragment,
             grr::ShaderSource::Spirv { entrypoint: "main_fs" },
-            &spirv,
+            &spirv[..],
             grr::ShaderFlags::VERBOSE,
         )?;
 
@@ -62,24 +57,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             },
             grr::PipelineFlags::VERBOSE,
         )?;
-
-        let vertex_array = grr.create_vertex_array(&[
-            grr::VertexAttributeDesc {
-                location: 0,
-                binding: 0,
-                format: grr::VertexFormat::Xy32Float,
-                offset: 0,
-            },
-            grr::VertexAttributeDesc {
-                location: 1,
-                binding: 0,
-                format: grr::VertexFormat::Xyz32Float,
-                offset: (2 * std::mem::size_of::<f32>()) as _,
-            },
-        ])?;
-
-        let triangle_data =
-            grr.create_buffer_from_host(grr::as_u8_slice(&VERTICES), grr::MemoryFlags::empty())?;
 
         let mut running = true;
         while running {
@@ -95,18 +72,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 _ => (),
             });
             grr.bind_pipeline(pipeline);
-            grr.bind_vertex_array(vertex_array);
-            grr.bind_vertex_buffers(
-                vertex_array,
-                0,
-                &[grr::VertexBufferView {
-                    buffer: triangle_data,
-                    offset: 0,
-                    stride: (std::mem::size_of::<f32>() * 5) as _,
-                    input_rate: grr::InputRate::Vertex,
-                }],
-            );
-
             grr.set_viewport(
                 0,
                 &[grr::Viewport {
@@ -139,8 +104,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         grr.delete_shaders(&[vs, fs]);
         grr.delete_pipeline(pipeline);
-        grr.delete_buffer(triangle_data);
-        grr.delete_vertex_array(vertex_array);
     }
 
     Ok(())
