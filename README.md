@@ -1,11 +1,8 @@
 <h2 align="center">
 grr-gpu
-</h2>
-<p align="center">
+<br>
 🐅 + 🐉
-</p>
-
-
+</h2>
 
 Showcasing `grr` running with SPIR-V shaders generated using `rust-gpu`.
 
