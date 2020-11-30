@@ -3,8 +3,9 @@
 #![feature(register_attr)]
 #![register_attr(spirv)]
 
-use core::f32::consts::PI;
-use spirv_std::{Input, Mat4, MathExt, Output, Vec2, Vec3, Vec4};
+use spirv_std::glam::{Vec2, Vec4};
+use spirv_std::storage_class::{Input, Output};
+use spirv_std::num_traits::Float;
 
 // Based upon https://www.shadertoy.com/view/XlSGzz
 fn sdf_torus(p: Vec2) -> f32 {
@@ -15,10 +16,10 @@ fn sdf_torus(p: Vec2) -> f32 {
 #[spirv(fragment)]
 pub fn main_fs(#[spirv(frag_coord)] frag_pos: Input<Vec2>, mut output: Output<Vec4>) {
     let pos = frag_pos.load();
-    let p = (2.0 * pos - Vec2(1024.0, 768.0)) / 768.0;
-    let coverage = sdf_torus(p).pow(2.2);
+    let p = (2.0 * pos - Vec2::new(1024.0, 768.0)) / 768.0;
+    let coverage = sdf_torus(p).powf(2.2);
 
-    output.store(Vec4(coverage, coverage, coverage, 1.0));
+    output.store(Vec4::new(coverage, coverage, coverage, 1.0));
 }
 
 #[allow(unused_attributes)]
@@ -28,20 +29,10 @@ pub fn main_vs(
     #[spirv(position)] mut out_pos: Output<Vec4>,
 ) {
     let vert_id = vert_id.load();
-    out_pos.store(Vec4(
+    out_pos.store(Vec4::new(
         (((vert_id & 1) << 2) - 1) as f32,
         (((vert_id & 2) << 1) - 1) as f32,
         0.0,
         1.0,
     ));
 }
-
-#[cfg(all(not(test), target_arch = "spirv"))]
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {}
-}
-
-#[cfg(all(not(test), target_arch = "spirv"))]
-#[lang = "eh_personality"]
-extern "C" fn rust_eh_personality() {}

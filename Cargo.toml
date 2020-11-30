@@ -12,5 +12,5 @@ grr = { git = "https://github.com/msiglreith/grr.git", branch = "spirv" }
 glutin = "0.21"
 
 [build-dependencies]
-spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "ffc6d30dcd7501f5640fade2c4cb833a7378c13a" }
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", rev = "c097297c5113fb6e4bbd28a829ed4a7df98d5e61" }
 
