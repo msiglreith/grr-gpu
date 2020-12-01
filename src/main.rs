@@ -56,6 +56,7 @@ fn main() -> anyhow::Result<()> {
             grr::ShaderFlags::VERBOSE,
         )?;
 
+        let vertex_array = grr.create_vertex_array(&[])?;
         let pipeline = grr.create_graphics_pipeline(
             grr::VertexPipelineDesc {
                 vertex_shader: vs,
@@ -88,6 +89,7 @@ fn main() -> anyhow::Result<()> {
                 },
                 Event::RedrawRequested(_) => {
                     grr.bind_pipeline(pipeline);
+                    grr.bind_vertex_array(vertex_array);
                     grr.set_viewport(
                         0,
                         &[grr::Viewport {
