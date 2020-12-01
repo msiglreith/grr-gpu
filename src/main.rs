@@ -1,11 +1,16 @@
-use glutin::dpi::LogicalSize;
-use std::error::Error;
-fn main() -> Result<(), Box<dyn Error>> {
+use glutin::{
+    dpi::{LogicalSize, PhysicalSize},
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+};
+
+fn main() -> anyhow::Result<()> {
     unsafe {
-        let mut events_loop = glutin::EventsLoop::new();
-        let wb = glutin::WindowBuilder::new()
+        let event_loop = EventLoop::new();
+        let wb = WindowBuilder::new()
             .with_title("grr - Triangle")
-            .with_dimensions(LogicalSize {
+            .with_inner_size(LogicalSize {
                 width: 1024.0,
                 height: 768.0,
             });
@@ -13,14 +18,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             .with_vsync(true)
             .with_srgb(true)
             .with_gl_debug_flag(true)
-            .build_windowed(wb, &events_loop)?
+            .build_windowed(wb, &event_loop)?
             .make_current()
             .unwrap();
 
-        let LogicalSize {
+        let PhysicalSize {
             width: w,
             height: h,
-        } = window.window().get_inner_size().unwrap();
+        } = window.window().inner_size();
 
         let grr = grr::Device::new(
             |symbol| window.get_proc_address(symbol) as *const _,
@@ -36,13 +41,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let vs = grr.create_shader(
             grr::ShaderStage::Vertex,
-            grr::ShaderSource::Spirv { entrypoint: "main_vs" },
+            grr::ShaderSource::Spirv {
+                entrypoint: "main_vs",
+            },
             &spirv[..],
             grr::ShaderFlags::VERBOSE,
         )?;
         let fs = grr.create_shader(
             grr::ShaderStage::Fragment,
-            grr::ShaderSource::Spirv { entrypoint: "main_fs" },
+            grr::ShaderSource::Spirv {
+                entrypoint: "main_fs",
+            },
             &spirv[..],
             grr::ShaderFlags::VERBOSE,
         )?;
@@ -58,53 +67,58 @@ fn main() -> Result<(), Box<dyn Error>> {
             grr::PipelineFlags::VERBOSE,
         )?;
 
-        let mut running = true;
-        while running {
-            events_loop.poll_events(|event| match event {
-                glutin::Event::WindowEvent { event, .. } => match event {
-                    glutin::WindowEvent::CloseRequested => running = false,
-                    glutin::WindowEvent::Resized(size) => {
-                        let dpi_factor = window.window().get_hidpi_factor();
-                        window.resize(size.to_physical(dpi_factor));
+        event_loop.run(move |event, _, control_flow| {
+            *control_flow = ControlFlow::Poll;
+
+            match event {
+                Event::LoopDestroyed => {
+                    grr.delete_shaders(&[vs, fs]);
+                    grr.delete_pipeline(pipeline);
+                    return;
+                }
+                Event::MainEventsCleared => {
+                    window.window().request_redraw();
+                }
+                Event::WindowEvent { event, .. } => match event {
+                    WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                    WindowEvent::Resized(size) => {
+                        window.resize(size);
                     }
                     _ => (),
                 },
+                Event::RedrawRequested(_) => {
+                    grr.bind_pipeline(pipeline);
+                    grr.set_viewport(
+                        0,
+                        &[grr::Viewport {
+                            x: 0.0,
+                            y: 0.0,
+                            w: w as _,
+                            h: h as _,
+                            n: 0.0,
+                            f: 1.0,
+                        }],
+                    );
+                    grr.set_scissor(
+                        0,
+                        &[grr::Region {
+                            x: 0,
+                            y: 0,
+                            w: w as _,
+                            h: h as _,
+                        }],
+                    );
+
+                    grr.clear_attachment(
+                        grr::Framebuffer::DEFAULT,
+                        grr::ClearAttachment::ColorFloat(0, [0.5, 0.5, 0.5, 1.0]),
+                    );
+                    grr.draw(grr::Primitive::Triangles, 0..3, 0..1);
+
+                    window.swap_buffers().unwrap();
+                }
                 _ => (),
-            });
-            grr.bind_pipeline(pipeline);
-            grr.set_viewport(
-                0,
-                &[grr::Viewport {
-                    x: 0.0,
-                    y: 0.0,
-                    w: w as _,
-                    h: h as _,
-                    n: 0.0,
-                    f: 1.0,
-                }],
-            );
-            grr.set_scissor(
-                0,
-                &[grr::Region {
-                    x: 0,
-                    y: 0,
-                    w: w as _,
-                    h: h as _,
-                }],
-            );
-
-            grr.clear_attachment(
-                grr::Framebuffer::DEFAULT,
-                grr::ClearAttachment::ColorFloat(0, [0.5, 0.5, 0.5, 1.0]),
-            );
-            grr.draw(grr::Primitive::Triangles, 0..3, 0..1);
-
-            window.swap_buffers()?;
-        }
-
-        grr.delete_shaders(&[vs, fs]);
-        grr.delete_pipeline(pipeline);
+            }
+        })
     }
-
-    Ok(())
 }
