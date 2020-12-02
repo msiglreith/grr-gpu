@@ -110,6 +110,11 @@ fn main() -> anyhow::Result<()> {
                             h: h as _,
                         }],
                     );
+                    grr.bind_uniform_constants(
+                        pipeline,
+                        0,
+                        &[ grr::Constant::Vec2([w as _, h as _])],
+                    );
 
                     grr.clear_attachment(
                         grr::Framebuffer::DEFAULT,

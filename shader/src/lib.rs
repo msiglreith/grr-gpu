@@ -4,7 +4,7 @@
 #![register_attr(spirv)]
 
 use spirv_std::glam::{Vec2, Vec4};
-use spirv_std::storage_class::{Input, Output};
+use spirv_std::storage_class::{Input, Output, UniformConstant};
 use spirv_std::num_traits::Float;
 
 // Based upon https://www.shadertoy.com/view/XlSGzz
@@ -14,9 +14,14 @@ fn sdf_torus(p: Vec2) -> f32 {
 
 #[allow(unused_attributes)]
 #[spirv(fragment)]
-pub fn main_fs(#[spirv(frag_coord)] frag_pos: Input<Vec2>, mut output: Output<Vec4>) {
+pub fn main_fs(
+    #[spirv(frag_coord)] frag_pos: Input<Vec2>,
+    mut output: Output<Vec4>,
+    viewport: UniformConstant<Vec2>,
+) {
+    let viewport = viewport.load();
     let pos = frag_pos.load();
-    let p = (2.0 * pos - Vec2::new(1024.0, 768.0)) / 768.0;
+    let p = (2.0 * pos - viewport) / viewport.y;
     let coverage = sdf_torus(p).powf(2.2);
 
     output.store(Vec4::new(coverage, coverage, coverage, 1.0));
